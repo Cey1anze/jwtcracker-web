@@ -1,0 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body{
+    overflow: hidden;
+    transition: background-image 0.6s ease;
+}
