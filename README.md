@@ -5,4 +5,4 @@ Vite + TailwindCSS + Next.UI
 
 ## Preview
 
-![](https://cdn.jsdelivr.net/gh/Cey1anze/Blog_Images@main/Google%20Chrome%202024-10-07%2022.45.06.tiff)
+![](https://cdn.jsdelivr.net/gh/Cey1anze/Blog_Images@main/20241007232813.png)
