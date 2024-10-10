@@ -5,6 +5,9 @@ import {Button} from "@nextui-org/button";
 
 import DefaultLayout from "@/layouts/default";
 
+import { useState } from 'react';
+import {jwtDecode, JwtHeader} from 'jwt-decode';
+
 const hashAlgoOption = [
     {value: "sha256", label: "SHA256"},
     {value: "sha384", label: "SHA384"},
@@ -12,6 +15,27 @@ const hashAlgoOption = [
 ];
 
 export default function IndexPage() {
+
+    const [jwt, setJwt] = useState('');
+    const [header, setHeader] = useState('');
+    const [payload, setPayload] = useState('');
+    const [error, setError] = useState('');
+
+    const decodeJwt = () => {
+        try {
+            const decodedHeader = jwtDecode<JwtHeader>(jwt, { header: true });
+            setHeader(JSON.stringify(decodedHeader, null, 2));
+
+            const decodedPayload = jwtDecode(jwt); // 不加第二个参数时默认解码载荷
+            setPayload(JSON.stringify(decodedPayload, null, 2));
+
+            setError('');
+        } catch (e) {
+            setError('JWT 无效，请检查输入');
+        }
+    };
+
+
     return (
         <DefaultLayout>
             <section className="flex items-center justify-center">
@@ -25,7 +49,10 @@ export default function IndexPage() {
                             labelPlacement="outside"
                             placeholder="输入 JWT"
                             className="justify-center p-4"
+                            value={jwt}
+                            onChange={(e) => setJwt(e.target.value)}
                         />
+                        {error && <div className="text-red-500 p-2">{error}</div>}
                         <Input
                             fullWidth
                             variant="bordered"
@@ -38,7 +65,7 @@ export default function IndexPage() {
                             <Button color="primary" variant="bordered" className="p-4">
                                 校验
                             </Button>
-                            <Button color="primary" variant="bordered" className="p-4">
+                            <Button color="primary" variant="bordered" className="p-4" onClick={decodeJwt}>
                                 解码
                             </Button>
                         </div>
@@ -111,12 +138,14 @@ export default function IndexPage() {
                                             variant="bordered"
                                             label="头部"
                                             className="justify-center"
+                                            value={header}
                                         />
                                         <Textarea
                                             fullWidth
                                             variant="bordered"
                                             label="载荷"
                                             className="justify-center"
+                                            value={payload}
                                         />
                                     </div>
                                 </Card>
