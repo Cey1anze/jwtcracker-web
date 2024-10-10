@@ -44,8 +44,8 @@ export const useTheme = (defaultTheme?: Theme) => {
 
   useEffect(() => {
     const backgroundImage = theme === ThemeProps.light
-        ? "url('public/lightBG.png')"
-        : "url('public/darkBG.png')";
+        ? "url('src/imgs/lightBG.png')"
+        : "url('src/imgs/darkBG.png')";
 
     document.body.style.backgroundImage = backgroundImage;
     document.body.style.backgroundSize = 'cover';
