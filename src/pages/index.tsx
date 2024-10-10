@@ -7,6 +7,7 @@ import DefaultLayout from "@/layouts/default";
 
 import { useState } from 'react';
 import {jwtDecode, JwtHeader} from 'jwt-decode';
+import { KJUR, b64utoutf8 } from 'jsrsasign';
 
 const hashAlgoOption = [
     {value: "sha256", label: "SHA256"},
@@ -17,40 +18,82 @@ const hashAlgoOption = [
 export default function IndexPage() {
 
     const [jwt, setJwt] = useState('');
+    const [secretKey, setSecretKey] = useState('');
     const [header, setHeader] = useState('');
     const [payload, setPayload] = useState('');
     const [error, setError] = useState('');
+    const [verificationResult, setVerificationResult] = useState('');
+    const [jwtInvalid, setJwtInvalid] = useState(false);
+    const [keyInvalid, setKeyInvalid] = useState(false);
+
+    const cleanState = () => {
+        setJwtInvalid(false);
+        setKeyInvalid(false);
+        setVerificationResult('');
+    }
 
     const decodeJwt = () => {
+        cleanState()
+
+        if (!jwt) {
+            setJwtInvalid(true);
+            return;
+        }
         try {
             const decodedHeader = jwtDecode<JwtHeader>(jwt, { header: true });
             setHeader(JSON.stringify(decodedHeader, null, 2));
 
-            const decodedPayload = jwtDecode(jwt); // 不加第二个参数时默认解码载荷
+            const decodedPayload = jwtDecode(jwt);
             setPayload(JSON.stringify(decodedPayload, null, 2));
 
             setError('');
         } catch (e) {
-            setError('JWT 无效，请检查输入');
+            setError('Token 无效，请检查输入');
         }
     };
 
+    const verifyJwt = () => {
+        cleanState()
+
+        if (!jwt) {
+            setJwtInvalid(true);
+        }
+        if (!secretKey) {
+            setKeyInvalid(true);
+        }
+
+        if (!jwt || !secretKey) {
+            return;
+        }
+
+        try {
+            const [headerB64] = jwt.split('.');
+            const headerJson = JSON.parse(b64utoutf8(headerB64));
+            const alg = headerJson.alg; // 从头部获取签名算法
+
+            const isValid = KJUR.jws.JWS.verify(jwt, secretKey, [alg]);
+            setVerificationResult(isValid ? "校验成功" : "校验失败");
+        } catch (e) {
+            setVerificationResult("校验过程中出错");
+        }
+    };
 
     return (
         <DefaultLayout>
             <section className="flex items-center justify-center">
                 <Card className="md:w-[90%] lg:w-[90%] border-none p-4" isBlurred shadow={"lg"}>
-                    <div className={"max-h-[calc(90vh-40px)] overflow-y-auto"}>
+                    <div className={"card-container"}>
                         <Textarea
-                            isRequired
                             fullWidth
                             variant="bordered"
-                            label="JWT"
+                            label="Token"
                             labelPlacement="outside"
-                            placeholder="输入 JWT"
+                            placeholder="输入 Token"
                             className="justify-center p-4"
                             value={jwt}
                             onChange={(e) => setJwt(e.target.value)}
+                            isInvalid={jwtInvalid} // 设置无效状态
+                            errorMessage={jwtInvalid ? 'Token 不能为空' : ''} // 错误消息
                         />
                         {error && <div className="text-red-500 p-2">{error}</div>}
                         <Input
@@ -60,9 +103,14 @@ export default function IndexPage() {
                             labelPlacement="outside"
                             placeholder="加解密时输入密钥 / 爆破时预览结果"
                             className="justify-center p-4"
+                            value={secretKey}
+                            onChange={(e) => setSecretKey(e.target.value)}
+                            isInvalid={keyInvalid} // 设置无效状态
+                            errorMessage={keyInvalid ? '密钥不能为空' : ''} // 错误消息
+                            description={verificationResult} // 显示校验结果
                         />
                         <div className="flex justify-center gap-4">
-                            <Button color="primary" variant="bordered" className="p-4">
+                            <Button color="primary" variant="bordered" className="p-4" onClick={verifyJwt}>
                                 校验
                             </Button>
                             <Button color="primary" variant="bordered" className="p-4" onClick={decodeJwt}>

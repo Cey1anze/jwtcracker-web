@@ -6,3 +6,18 @@ html, body{
     overflow: hidden;
     transition: background-image 0.6s ease;
 }
+
+.card-container {
+    max-height: calc(90vh - 40px);
+    overflow-y: auto;
+}
+
+/* 隐藏滚动条 */
+.card-container::-webkit-scrollbar {
+    display: none; /* Chrome 和 Safari */
+}
+
+/* Firefox */
+.card-container {
+    scrollbar-width: none; /* Firefox */
+}
