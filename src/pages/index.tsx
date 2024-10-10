@@ -10,9 +10,9 @@ import {jwtDecode, JwtHeader} from 'jwt-decode';
 import { KJUR, b64utoutf8 } from 'jsrsasign';
 
 const hashAlgoOption = [
-    {value: "sha256", label: "SHA256"},
-    {value: "sha384", label: "SHA384"},
-    {value: "sha512", label: "SHA512"},
+    {value: "HS256", label: "SHA256"},
+    {value: "HS384", label: "SHA384"},
+    {value: "HS512", label: "SHA512"},
 ];
 
 export default function IndexPage() {
@@ -25,15 +25,20 @@ export default function IndexPage() {
     const [verificationResult, setVerificationResult] = useState('');
     const [jwtInvalid, setJwtInvalid] = useState(false);
     const [keyInvalid, setKeyInvalid] = useState(false);
+    const [headerInvalid, setHeaderInvalid] = useState(false);
+    const [payloadInvalid, setPayloadInvalid] = useState(false);
+    const [algorithm, setAlgorithm] = useState('HS256');
 
     const cleanState = () => {
         setJwtInvalid(false);
         setKeyInvalid(false);
+        setHeaderInvalid(false);
+        setPayloadInvalid(false);
         setVerificationResult('');
     }
 
     const decodeJwt = () => {
-        cleanState()
+        cleanState();
 
         if (!jwt) {
             setJwtInvalid(true);
@@ -53,7 +58,7 @@ export default function IndexPage() {
     };
 
     const verifyJwt = () => {
-        cleanState()
+        cleanState();
 
         if (!jwt) {
             setJwtInvalid(true);
@@ -78,6 +83,33 @@ export default function IndexPage() {
         }
     };
 
+    const encodeJwt = () => {
+        cleanState();
+
+        if (!secretKey) {
+            setKeyInvalid(true);
+        }
+        if (!header) {
+            setHeaderInvalid(true);
+        }
+        if (!payload) {
+            setPayloadInvalid(true);
+        }
+
+        if (!secretKey || !header || !payload) {
+            return;
+        }
+
+        try {
+            // 使用 jsrsasign 编码 JWT
+            const jwtToken = KJUR.jws.JWS.sign(algorithm, JSON.stringify(JSON.parse(header)), JSON.stringify(JSON.parse(payload)), secretKey);
+            setJwt(jwtToken);
+            setError('');
+        } catch (e) {
+            setError('编码过程中出错，请检查输入');
+        }
+    };
+
     return (
         <DefaultLayout>
             <section className="flex items-center justify-center">
@@ -92,8 +124,8 @@ export default function IndexPage() {
                             className="justify-center p-4"
                             value={jwt}
                             onChange={(e) => setJwt(e.target.value)}
-                            isInvalid={jwtInvalid} // 设置无效状态
-                            errorMessage={jwtInvalid ? 'Token 不能为空' : ''} // 错误消息
+                            isInvalid={jwtInvalid}
+                            errorMessage={jwtInvalid ? 'Token 不能为空' : ''}
                         />
                         {error && <div className="text-red-500 p-2">{error}</div>}
                         <Input
@@ -105,9 +137,9 @@ export default function IndexPage() {
                             className="justify-center p-4"
                             value={secretKey}
                             onChange={(e) => setSecretKey(e.target.value)}
-                            isInvalid={keyInvalid} // 设置无效状态
-                            errorMessage={keyInvalid ? '密钥不能为空' : ''} // 错误消息
-                            description={verificationResult} // 显示校验结果
+                            isInvalid={keyInvalid}
+                            errorMessage={keyInvalid ? '密钥不能为空' : ''}
+                            description={verificationResult}
                         />
                         <div className="flex justify-center gap-4">
                             <Button color="primary" variant="bordered" className="p-4" onClick={verifyJwt}>
@@ -154,7 +186,11 @@ export default function IndexPage() {
                                             {/* 设置 Input 组件占满整个宽度 */}
                                             <Input className="w-full" label="自定义字符集" variant="bordered"/>
                                         </div>
-                                        <Select label="签名算法" variant="bordered" className="w-full">
+                                        <Select
+                                            label="签名算法"
+                                            variant="bordered"
+                                            className="w-full"
+                                        >
                                             {hashAlgoOption.map((option) => (
                                                 <SelectItem key={option.value}>{option.label}</SelectItem>
                                             ))}
@@ -171,11 +207,17 @@ export default function IndexPage() {
                                 <Card className="w-full h-full border-none p-6" isBlurred>
                                     <div className="flex flex-col gap-4">
                                         <div className="flex w-full flex-wrap md:flex-nowrap gap-4">
-                                            <Button color="primary" variant="bordered" className="p-4">
+                                            <Button color="primary" variant="bordered" className="p-4" onClick={encodeJwt}>
                                                 编码
                                             </Button>
-                                            <Select label="签名算法" variant="bordered" labelPlacement="outside-left"
-                                                    className="max-w-xs">
+                                            <Select
+                                                label="签名算法"
+                                                variant="bordered"
+                                                labelPlacement="outside-left"
+                                                className="max-w-xs"
+                                                value={algorithm}
+                                                onChange={(e) => setAlgorithm(e.target.value)}
+                                            >
                                                 {hashAlgoOption.map((option) => (
                                                     <SelectItem key={option.value}>{option.label}</SelectItem>
                                                 ))}
@@ -185,15 +227,21 @@ export default function IndexPage() {
                                             fullWidth
                                             variant="bordered"
                                             label="头部"
-                                            className="justify-center"
+                                            className="justify-center p-4"
                                             value={header}
+                                            onChange={(e) => setHeader(e.target.value)}
+                                            isInvalid={headerInvalid}
+                                            errorMessage={headerInvalid ? '头部不能为空' : ''}
                                         />
                                         <Textarea
                                             fullWidth
                                             variant="bordered"
                                             label="载荷"
-                                            className="justify-center"
+                                            className="justify-center p-4"
                                             value={payload}
+                                            onChange={(e) => setPayload(e.target.value)}
+                                            isInvalid={payloadInvalid}
+                                            errorMessage={payloadInvalid ? '载荷不能为空' : ''}
                                         />
                                     </div>
                                 </Card>
