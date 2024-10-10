@@ -1,6 +1,6 @@
 // originally written by @imoaazahmed
 
-import { useEffect, useMemo, useState } from "react";
+import {useEffect, useMemo, useState} from "react";
 
 const ThemeProps = {
   key: "theme",
@@ -43,11 +43,9 @@ export const useTheme = (defaultTheme?: Theme) => {
     theme === ThemeProps.dark ? setLightTheme() : setDarkTheme();
 
   useEffect(() => {
-    const backgroundImage = theme === ThemeProps.light
+    document.body.style.backgroundImage = theme === ThemeProps.light
         ? "url('src/imgs/lightBG.png')"
         : "url('src/imgs/darkBG.png')";
-
-    document.body.style.backgroundImage = backgroundImage;
     document.body.style.backgroundSize = 'cover';
     document.body.style.backgroundPosition = 'center';
     _setTheme(theme);
