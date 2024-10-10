@@ -16,7 +16,6 @@ const hashAlgoOption = [
 ];
 
 export default function IndexPage() {
-
     const [jwt, setJwt] = useState('');
     const [secretKey, setSecretKey] = useState('');
     const [header, setHeader] = useState('');
@@ -25,15 +24,19 @@ export default function IndexPage() {
     const [verificationResult, setVerificationResult] = useState('');
     const [jwtInvalid, setJwtInvalid] = useState(false);
     const [keyInvalid, setKeyInvalid] = useState(false);
+    const [algorithmInvalid, setAlgorithmInvalid] = useState(false);
     const [headerInvalid, setHeaderInvalid] = useState(false);
     const [payloadInvalid, setPayloadInvalid] = useState(false);
     const [algorithm, setAlgorithm] = useState('HS256');
+    const [algorithmError, setAlgorithmError] = useState('');
 
     const cleanState = () => {
         setJwtInvalid(false);
         setKeyInvalid(false);
+        setAlgorithmInvalid(false);
         setHeaderInvalid(false);
         setPayloadInvalid(false);
+        setError('');
         setVerificationResult('');
     }
 
@@ -101,6 +104,13 @@ export default function IndexPage() {
         }
 
         try {
+            // 校验头部算法参数，以select为标准
+            const headerJson = JSON.parse(header);
+            if (headerJson.alg !== algorithm) {
+                setAlgorithmInvalid(true);
+                setAlgorithmError(`头部中的 alg 参数 (${headerJson.alg}) 与选择的算法 (${algorithm}) 不一致`);
+                return;
+            }
             // 使用 jsrsasign 编码 JWT
             const jwtToken = KJUR.jws.JWS.sign(algorithm, JSON.stringify(JSON.parse(header)), JSON.stringify(JSON.parse(payload)), secretKey);
             setJwt(jwtToken);
@@ -217,6 +227,8 @@ export default function IndexPage() {
                                                 className="max-w-xs"
                                                 value={algorithm}
                                                 onChange={(e) => setAlgorithm(e.target.value)}
+                                                isInvalid={algorithmInvalid}
+                                                errorMessage={algorithmInvalid ? algorithmError : ''}
                                             >
                                                 {hashAlgoOption.map((option) => (
                                                     <SelectItem key={option.value}>{option.label}</SelectItem>
